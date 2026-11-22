@@ -1,0 +1,6 @@
+import React from 'react';
+import {sum,fmt,hourText,modelIndex} from '../utils/numbers.js';
+export default function Insights({rows,info,model}){
+ const ranges=[['새벽',0,6],['오전',6,12],['오후',12,18],['야간',18,24]];
+ return <aside className="panel insight-panel" aria-labelledby="insight-title"><div className="panel-header"><h2 id="insight-title">하루 한눈에 보기</h2><span className="tag">{model}</span></div><div className="sun-graphic" aria-hidden="true"><div className="sun-orbit"/><div className="sun-disc"/><div className="horizon"/><span>00:00</span><span>23:00</span></div><p className="insight-kicker">가장 많이 발전하는 시간</p><div className="peak-window">{info.total>0?hourText(info.peak):'발전량 없음'}</div><p className="insight-copy">{info.total>0?`하루 예측 발전량의 ${fmt(info.peakValue/info.total*100)}%가 집중됩니다.`:'선택 조건의 예측 발전량 합계가 0입니다.'}</p><div className="period-list">{ranges.map(([name,start,end])=>{const ratio=info.total>0?100*sum(rows.slice(start,end).map(row=>row[modelIndex(model)]))/info.total:0;return <div className="period-row" key={name} title={`${start}~${end-1}시`}><span>{name}</span><span><i style={{width:`${ratio}%`}}/></span><strong>{fmt(ratio)}%</strong></div>;})}</div><div className="insight-note">예측 기준: 전날 23시 관측 완료 후</div></aside>;
+}

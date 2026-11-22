@@ -1,0 +1,10 @@
+{
+  "GRU_reload_max_abs_difference": 1.1229316765337671e-06,
+  "TFT_reload_max_abs_difference": 2.6950360222599556e-05,
+  "complete_0_to_23_outputs": true,
+  "hourly_daily_reconciliation": true,
+  "future_unknown_perturbation_delta": {
+    "GRU": 0.0,
+    "TFT": 0.0
+  }
+}

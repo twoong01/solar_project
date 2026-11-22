@@ -1,0 +1,14 @@
+/* React integration-only CSS. Original colors, fonts, layout and component classes remain in original.css */
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-right .button{font-size:12px;padding:6px 10px}
+.solar-react-bars{display:block;width:calc(100% - 50px);margin:15px 25px 5px;max-height:320px}
+.error-panel{background:#fff2ed;border:1px solid #efc3a9;color:#984d2e;padding:14px 18px;border-radius:8px;margin-bottom:18px}
+.metrics-dialog-table{width:100%;border-collapse:collapse;margin:16px 0}.metrics-dialog-table td,.metrics-dialog-table th{padding:10px;border-bottom:1px solid #e5eaec;text-align:left}.metrics-dialog-table caption{font-weight:700;text-align:left;margin-bottom:8px}
+.kpx-result{display:block}
+@media(max-width:650px){.topbar-right{gap:5px}.topbar-right .button{padding:5px 7px}.solar-react-bars{width:calc(100% - 18px);margin:10px 9px}}
+
+.kdhc-connect-form label{display:block;margin:10px 0 7px;color:#61757e;font-size:14px;font-weight:650}
+.kdhc-connect-form label small{font-weight:400;color:#899da7}
+.kdhc-connect-form input{display:block;width:100%;border:1px solid #dce3e7;border-radius:5px;padding:11px 12px;height:42px;color:var(--ink)}
+.kdhc-connect-form .kdhc-actions{display:flex;align-items:center;gap:15px;margin-top:13px}
+.kdhc-test-results{margin-top:18px}.kdhc-view .panel h3{font-size:17px;margin:0 0 14px}

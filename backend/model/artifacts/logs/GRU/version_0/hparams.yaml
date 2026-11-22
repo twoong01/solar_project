@@ -1,0 +1,10 @@
+embedding_size: 4
+hidden_size: 32
+input_size: 5
+known_indices:
+- 0
+- 1
+- 2
+- 3
+learning_rate: 0.001
+n_sites: 13

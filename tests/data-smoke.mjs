@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {validateForecastData,getAvailableDates,aggregate,rowStats} from '../src/utils/forecast.js';
+import {selectSolarTrading} from '../src/utils/kpx.js';
+const forecast=validateForecastData(JSON.parse(fs.readFileSync('public/data/forecast.json','utf8')));
+assert.equal(forecast.sites.length,13);
+assert.equal(Object.values(forecast.inverters).reduce((a,items)=>a+items.length,0),28);
+assert.equal(getAvailableDates(forecast).length,91);
+assert.equal(aggregate(forecast.forecast,'all').length,24);
+assert.ok(rowStats(aggregate(forecast.forecast,'all'),'GRU',3).total>=0);
+const kpx=JSON.parse(fs.readFileSync('public/data/kpx-solar-2025.json','utf8'));
+assert.equal(kpx.regions.length,17);assert.equal(Object.keys(kpx.days).length,365);
+const sample=selectSolarTrading(kpx,'2025-11-24','울산시');
+assert.equal(sample.records,24);
+assert.ok(Math.abs(sample.totalMWh-238.434668)<1e-8);
+const national=selectSolarTrading(kpx,'2025-12-31','all');
+assert.equal(national.records,408);
+console.log('PASS: 13지역, 28인버터, 91일 예측/테스트, 365일 17시도 태양광 CSV 계산');

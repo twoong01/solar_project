@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const build=path.join(root,'dist'), destination=path.join(root,'backend','dist');
+if(!fs.existsSync(path.join(build,'index.html')))throw new Error('먼저 npm run build를 실행하세요.');
+fs.rmSync(destination,{recursive:true,force:true});
+fs.cpSync(build,destination,{recursive:true});
+fs.copyFileSync(path.join(root,'public','data','forecast.json'),path.join(destination,'data.json'));
+console.log('React dist → backend/dist 동기화 완료');

@@ -1,0 +1,30 @@
+import React,{useEffect,useMemo,useState} from 'react';
+import SolarBarChart from '../components/charts/SolarBarChart.jsx';
+import {loadSolarTradingData,backendRequest,postJson} from '../services/dataService.js';
+import {selectSolarTrading} from '../utils/kpx.js';
+import {downloadCsv} from '../utils/download.js';
+import {fmt} from '../utils/numbers.js';
+export default function KpxPage(){
+ const [raw,setRaw]=useState(null),[loading,setLoading]=useState(true),[date,setDate]=useState('2025-12-31'),[region,setRegion]=useState('all');
+ const [result,setResult]=useState(null),[message,setMessage]=useState('CSV 데이터가 준비돼 있습니다.'),[error,setError]=useState(false);
+ const [key,setKey]=useState(''),[auth,setAuth]=useState('기본 CSV 조회는 인증키가 필요하지 않습니다.'),[busy,setBusy]=useState(false);
+ useEffect(()=>{let alive=true;loadSolarTradingData().then(value=>{if(alive){setRaw(value);setResult(selectSolarTrading(value,'2025-12-31','all'));setMessage('내장 CSV에서 2025-12-31 태양광 데이터 조회 완료. 실시간 데이터가 아닙니다.');}}).catch(err=>{setError(true);setMessage(`내장 CSV 로딩 실패: ${err.message}`)}).finally(()=>{if(alive)setLoading(false)});return ()=>{alive=false};},[]);
+ function showLocal(){try{const value=selectSolarTrading(raw,date,region);setResult(value);setMessage(`내장 CSV에서 ${date} 태양광 실적 ${value.records}행을 조회했습니다. 실시간 데이터가 아닙니다.`);setError(false);}catch(e){setError(true);setMessage(e.message);}}
+ async function registerKey(){if(!key.trim()){setMessage('인증키를 입력해 주세요.');setError(true);return;}setBusy(true);try{await postJson('/api/kpx/auth',{key:key.trim()});setKey('');setAuth('키 저장됨 · 인증 미검증 (서버 메모리)');setMessage('키 저장 완료. 공식 인증 여부는 연결 진단 버튼으로 확인하세요.');setError(false);}catch(e){setMessage(`선택 API 서버 연결 실패: ${e.message}`);setError(true);}finally{setBusy(false)}}
+ async function diagnose(){setBusy(true);try{const d=await backendRequest('/api/kpx/diagnose');setAuth('공식 인증 확인');setMessage(`공식 API 진단 성공. 응답 컬럼: ${(d.sampleFields||[]).join(', ')||'자료 없음'}`);setError(false);}catch(e){setMessage(`공식 API 진단 불가: ${e.message}`);setError(true)}finally{setBusy(false)}}
+ async function fetchOfficial(){setBusy(true);try{const value=await backendRequest(`/api/kpx/day?date=${encodeURIComponent(date)}&region=${encodeURIComponent(region)}`);setResult(value);setMessage(`공식 API 응답 조회 성공: ${date}. 공개 데이터의 최신성은 제공기관 기준입니다.`);setError(false);}catch(e){setMessage(`공식 API 조회 불가: ${e.message}`);setError(true)}finally{setBusy(false)}}
+ const regions=raw?.regions||[];
+ const label=useMemo(()=>result?.region==='all'?'전체 시·도':result?.region,[result]);
+ return <section className="kpx-view" aria-label="2025년 태양광 발전 실적 CSV 조회">
+   <div className="kpx-hero"><div><span className="kpx-eyebrow">OPEN DATA CONNECTOR · KPX</span><h2>전력거래소 태양광 발전 현황</h2><p>공공데이터포털 15065269 · 태양광만 조회 · 시·도별 시간별 거래량 (MWh)</p><p className="kpx-warning">2025년 태양광 발전 실적 365일 전체 CSV가 앱에 내장돼 있어요. 인증키·인터넷 없이 모든 날짜와 지역을 조회할 수 있습니다.<br/>기존 13개 발전소 GRU·TFT 예측과는 별개의 실적 데이터입니다.</p></div><span className="kpx-pill connected">내장 CSV · 인증 불필요</span></div>
+   <details className="kpx-connection-box"><summary style={{cursor:'pointer',fontWeight:700,color:'#566b76'}}>선택 기능 · 공공데이터 API 연결 / 인증키 설정 (CSV 조회에는 불필요)</summary><div className="kpx-connection-form" style={{marginTop:12}}><label htmlFor="kpx-key">공공데이터 API 인증키 <small>별도 서버 메모리 보관 · React 파일에 미포함</small></label><div className="kpx-input-row"><input id="kpx-key" type="password" autoComplete="off" value={key} onChange={e=>setKey(e.target.value)} placeholder="발급받은 API 키 붙여넣기"/><button className="button primary" type="button" disabled={busy} onClick={registerKey}>키 등록</button><button className="button secondary" type="button" disabled={busy} onClick={diagnose}>API 연결 진단</button></div></div><p className="kpx-helper" role="status">{auth} · API 기능은 별도 서버 실행 시에만 사용 가능</p></details>
+   <div className="kpx-filter"><label>조회 일자<input type="date" min="2025-01-01" max="2025-12-31" value={date} onChange={e=>setDate(e.target.value)}/></label><label>시·도<select value={region} onChange={e=>setRegion(e.target.value)}><option value="all">전국(시·도 합계)</option>{regions.map(s=><option key={s} value={s}>{s}</option>)}</select></label><button type="button" className="button primary" onClick={showLocal} disabled={loading||!raw}>☀ CSV에서 발전 실적 조회</button><button type="button" className="button secondary" onClick={fetchOfficial} disabled={busy}>공식 API로 재조회 (선택)</button></div>
+   <p className="kpx-helper"><strong>내장 데이터: 2025-01-01 ~ 2025-12-31</strong> · 전국 17개 시·도 · 태양광 148,920행 · 1~24시 · MWh. 기본 버튼은 인터넷 없이 작동합니다.</p>
+   <div className={`kpx-message ${error?'kpx-error':''}`} role="status">{message}</div>
+   {result&&<div className="kpx-result">
+      <div className="kpx-stats"><article><small>조회일 태양광 거래량</small><strong>{fmt(result.totalMWh,2)}</strong><span>MWh · 시간별 합계</span></article><article><small>조회 지역</small><strong>{result.regions.length}개</strong><span>시·도 단위</span></article><article><small>자료 구분</small><strong className="kpx-source">{result.source.includes('CSV')?'내장 CSV · 실제 실적':'공식 API 응답'}</strong><span>자료 기준 {result.updatedAt.slice(0,10)}</span></article></div>
+      <div className="panel kpx-chart-card"><div className="panel-header"><div><h2>태양광 24개 거래시간 발전 패턴</h2><p>{result.date} · {label} · {result.records}개 태양광 행</p></div><span className="count-tag">01~24시 · MWh</span></div><SolarBarChart intervals={result.intervals}/><p className="kpx-note">{result.note}</p></div>
+      <div className="panel"><div className="panel-header"><h2>시간별 태양광 거래량 (CSV 원자료)</h2><button type="button" className="button secondary" onClick={()=>downloadCsv(`KPX_solar_${result.date}_${result.region}.csv`,[['거래일','지역','연료원','거래시간','전력거래량(MWh)'],...result.intervals.map(x=>[result.date,result.region,'태양광',x.hour,x.mwh])])}>CSV 저장</button></div><div className="table-scroll"><table><thead><tr><th>거래시간</th><th>태양광 전력거래량 (MWh)</th></tr></thead><tbody>{result.intervals.map(x=><tr key={x.hour}><td>{String(x.hour).padStart(2,'0')}시</td><td>{fmt(x.mwh,4)}</td></tr>)}</tbody></table></div></div>
+    </div>}
+ </section>;
+}
